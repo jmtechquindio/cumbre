@@ -253,7 +253,7 @@ function ArticleView({ a, all, onBack, onRead }) {
 }
 
 /* ── Home ── */
-function Home({ arts, onRead, onNav }) {
+function Home({ arts, onRead, onNav, isEditor, onLoadExample }) {
   const ft = arts[0];
   return <div>
     {ft && <section style={{ position: "relative", minHeight: "72vh", background: ft.heroImg ? "transparent" : ft.hc, display: "flex", alignItems: "flex-end", overflow: "hidden" }}>
@@ -275,6 +275,12 @@ function Home({ arts, onRead, onNav }) {
     <section style={{ maxWidth: 1200, margin: "0 auto", padding: "52px 20px" }}>
       <p style={{ fontFamily: "var(--fh)", fontSize: ".62rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".15em", color: "var(--v2)", marginBottom: 5 }}>Lo más reciente</p>
       <h2 style={{ fontFamily: "var(--fh)", fontSize: "1.9rem", fontWeight: 900, textTransform: "uppercase", color: "var(--v)", marginBottom: 28 }}>Últimos artículos</h2>
+      {isEditor && arts.length === 0 && (
+        <div style={{ background: "var(--vc)", padding: "24px", marginBottom: "28px", textAlign: "center", border: "1px dashed var(--v2)" }}>
+          <p style={{ fontFamily: "var(--fb)", fontSize: ".9rem", color: "var(--v2)", marginBottom: "12px" }}>El sitio está vacío. Como editor, puedes cargar los datos de ejemplo.</p>
+          <button onClick={onLoadExample} style={{ background: "var(--v)", color: "#fff", border: "none", padding: "10px 20px", fontFamily: "var(--fh)", fontSize: ".75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: ".1em", cursor: "pointer" }}>Cargar ejemplo</button>
+        </div>
+      )}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(268px,1fr))", gap: 28 }}>
         {arts.slice(1).map((a, i) => <Card key={a.id} a={a} onRead={onRead} dl={"s" + ((i % 5) + 1)} />)}
       </div>
@@ -620,7 +626,7 @@ function Footer({ onNav }) {
 export default function App() {
   const [isEditor, setIsEditor] = useState(false);
   const [view, setView] = useState({ name: "home" });
-  const [arts, setArts] = useState(DATA);
+  const [arts, setArts] = useState([]);
   const [notif, setNotif] = useState(null);
   const [loginUser, setLoginUser] = useState("");
   const [loginPass, setLoginPass] = useState("");
@@ -636,7 +642,8 @@ export default function App() {
       notify("Bienvenido al panel editorial");
     } else { setLoginErr(true); }
   };
-  const doLogout = () => { setIsEditor(false); setView({ name: "home" }); notify("Sesión cerrada"); };
+  const logout = () => { setIsEditor(false); setView({ name: "home" }); notify("Sesión cerrada"); };
+  const loadExample = () => { setArts(DATA); notify("Datos de ejemplo cargados"); };
   const saveArt = a => { setArts(prev => prev.find(x => x.id === a.id) ? prev.map(x => x.id === a.id ? a : x) : [a, ...prev]); notify("Artículo guardado"); setView({ name: "dash" }); };
   const delArt = id => { setArts(prev => prev.filter(a => a.id !== id)); notify("Artículo eliminado", "error"); };
 
@@ -669,7 +676,7 @@ export default function App() {
   </>;
 
   let content = null;
-  if (view.name === "home") content = <Home arts={arts} onRead={a => nav("art", a)} onNav={nav} />;
+  if (view.name === "home") content = <Home arts={arts} onRead={a => nav("art", a)} onNav={nav} isEditor={isEditor} onLoadExample={loadExample} />;
   else if (view.name === "art") content = <ArticleView a={view.art} all={arts} onBack={() => nav("home")} onRead={a => nav("art", a)} />;
   else if (view.name === "cat") content = <CatView cat={view.cat} arts={arts} onRead={a => nav("art", a)} />;
   else if (view.name === "editions") content = <EdnsView arts={arts} onRead={a => nav("art", a)} />;
@@ -679,7 +686,7 @@ export default function App() {
   return <>
     <CSS />
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-      <Header isEditor={isEditor} onLogout={doLogout} onNav={nav} />
+      <Header isEditor={isEditor} onLogout={logout} onNav={nav} />
       <main style={{ flex: 1 }}>{content}</main>
       {!["dash", "edit"].includes(view.name) && <Footer onNav={nav} />}
     </div>
